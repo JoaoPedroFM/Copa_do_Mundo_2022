@@ -1,0 +1,115 @@
+---
+title: "Copa do Mundo 2022"
+output: 
+  flexdashboard::flex_dashboard:
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+{library(tidyverse)
+library(readxl)
+library(tmap)
+library(RColorBrewer)
+library(sf)}
+
+Mundo = st_read(dsn = "CNTR_RG_01M_2020_4326.shp")
+paises = read_excel("paises.xlsx")
+
+Mundo = Mundo |>
+  left_join(paises, by="NAME_ENGL") |> 
+  select(NAME_PT, geometry) |> 
+  mutate(NAME_PT= str_to_upper(NAME_PT)) |> 
+  mutate(ANFITRIAO= ifelse(NAME_PT=="QATAR", "Sim", "Não"), 
+         CONMEBOL= ifelse(NAME_PT=="BRASIL"|NAME_PT=="ARGENTINA"|NAME_PT=="EQUADOR"|NAME_PT=="URUGUAI", "Sim", "Não"), 
+         UEFA= ifelse(NAME_PT=="ALEMANHA"|NAME_PT=="DINAMARCA"|NAME_PT=="FRANÇA"|NAME_PT=="BÉLGICA"|NAME_PT=="CROÁCIA"|NAME_PT=="SÉRVIA"|NAME_PT=="ESPANHA"|NAME_PT=="REINO UNIDO"|NAME_PT=="SUÍÇA"|NAME_PT=="HOLANDA"|NAME_PT=="PORTUGAL"|NAME_PT=="POLÔNIA", "Sim", "Não"),
+         AFC= ifelse(NAME_PT=="IRÃ"|NAME_PT=="COREIA DO SUL"|NAME_PT=="JAPÃO"|NAME_PT=="ARÁBIA SAUDITA", "Sim", "Não"),
+         CONCACAF= ifelse(NAME_PT=="CANADÁ", "Sim", "Não"),
+         CAF= ifelse(NAME_PT=="GANA"|NAME_PT=="SENEGAL", "Sim", "Não"),
+         REPESCAGEM=ifelse(NAME_PT=="AUSTRÁLIA"|NAME_PT=="EMIRADOS ÁRABES UNIDOS"|NAME_PT=="NOVA ZELÂNDIA"|NAME_PT=="ILHAS SALOMÃO"|NAME_PT=="UCRÂNIA"|NAME_PT=="PERU"|NAME_PT=="COLÔMBIA"|NAME_PT=="CHILE", "Sim", "Não"),
+         COPA= ifelse(ANFITRIAO=="Sim"|CONMEBOL=="Sim"|UEFA=="Sim"|AFC=="Sim"|CONCACAF=="Sim", "Sim", "Não"),
+         TITULO= ifelse(NAME_PT=="BRASIL"|NAME_PT=="ARGENTINA"|NAME_PT=="URUGUAI"|NAME_PT=="ALEMANHA"|NAME_PT=="ITÁLIA"|NAME_PT=="FRANÇA"|NAME_PT=="ESPANHA"|NAME_PT=="INGLATERRA", "Sim", "Não"))
+
+classificados = Mundo |> 
+  filter(ANFITRIAO=="Sim"|CONMEBOL=="Sim"|UEFA=="Sim"|AFC=="Sim"|CONCACAF=="Sim"|CAF=="Sim")
+
+```
+
+Informações sobre classificados 
+=======================================================================
+
+column {data-width=500, .tabset}
+-----------------------------------------------------------------------
+
+### Países classificados para a Copa do Mundo de 2022
+
+```{r}
+Mundo$situacao= NA
+
+for (i in 1:length(Mundo$COPA)){
+  if(is.na(Mundo$COPA[i])==T) 
+    Mundo$situacao[i] = "F"
+  else{
+    if((Mundo$ANFITRIAO[i])== "Sim")
+      Mundo$situacao[i] = "A"
+    else{
+      if((Mundo$CONMEBOL[i])== "Sim")
+        Mundo$situacao[i] = "B"
+      else{
+        if((Mundo$UEFA[i])== "Sim")
+          Mundo$situacao[i] = "C"
+        else{
+          if((Mundo$AFC[i])== "Sim")
+            Mundo$situacao[i] = "D"
+          else{
+            if((Mundo$CONCACAF[i])== "Sim")
+              Mundo$situacao[i] = "E"
+            else{
+              if((Mundo$CAF[i])== "Sim")
+                Mundo$situacao[i] = "F"
+              else{
+                if((Mundo$REPESCAGEM[i])== "Sim")
+                  Mundo$situacao[i] = "G"
+                else{Mundo$situacao[i] = "H"}
+              }
+            }
+          }
+        }
+      }
+    }  
+  }
+}
+
+Mundo$situacao = ordered(Mundo$situacao, 
+                          levels = c("A",  "B",  "C", "D", "E", "F", "G", "H", "I"),
+                          labels = c("Anfitrião", "Classificado- CONMEBOL",
+                                     "Classificado- UEFA", 
+                                     "Classificado- AFC", 
+                                     "Classificado- CONCACAF",
+                                     "Classificado- CAF",
+                                     "Repescagem",
+                                     "Não Classificado",
+                                     "Dados Inconsistentes"))
+
+red = brewer.pal(9,"Reds")
+gre = brewer.pal(9,"Greens")
+yel = brewer.pal(9,"YlOrBr")
+blu = brewer.pal(9,"Blues")
+
+#Definindo o tipo do mapa como interativo
+tmap_mode("view")
+
+tm_shape(Mundo) + 
+  tm_polygons("situacao",
+              border.col = "white",
+              title = paste(as.character(dim(classificados)[1]), "Países classificados para a Copa do Mundo do Qatar 2022"),
+              id = "NAME_PT",
+              popup.vars=c("Nome:" = "NAME_PT",
+                           "Situação:" = "situacao",
+                           "Já foi campeão:" = "TITULO"), 
+              palette = c("purple", gre[8], blu[8], yel[4], red[6], "black", yel[8], blu[2], "gray"),
+              textNA = "Valor Faltante",
+              set.view = 6, legend.show = T)  +
+  tm_view(alpha = 1, view.legend.position = c("left","bottom")) +
+  tm_add_legend(labels = "Clique em um país para mais informações!", col = "white")
+
+```
