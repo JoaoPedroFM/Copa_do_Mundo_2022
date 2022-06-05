@@ -25,9 +25,9 @@ Mundo = Mundo |>
          AFC= ifelse(NAME_PT=="IRÃ"|NAME_PT=="COREIA DO SUL"|NAME_PT=="JAPÃO"|NAME_PT=="ARÁBIA SAUDITA", "Sim", "Não"),
          CONCACAF= ifelse(NAME_PT=="CANADÁ"|NAME_PT=="MÉXICO"|NAME_PT=="ESTADOS UNIDOS", "Sim", "Não"),
          CAF= ifelse(NAME_PT=="GANA"|NAME_PT=="SENEGAL"|NAME_PT=="TUNÍSIA"|NAME_PT=="MARROCOS"|NAME_PT=="CAMARÕES", "Sim", "Não"),
-         REPESCAGEM=ifelse(NAME_PT=="AUSTRÁLIA"|NAME_PT=="EMIRADOS ÁRABES UNIDOS"|NAME_PT=="PERU"|NAME_PT=="NOVA ZELÂNDIA"|NAME_PT=="COSTA RICA"|NAME_PT=="UCRÂNIA", "Sim", "Não"),
+         REPESCAGEM=ifelse(NAME_PT=="AUSTRÁLIA"|NAME_PT=="EMIRADOS ÁRABES UNIDOS"|NAME_PT=="PERU"|NAME_PT=="NOVA ZELÂNDIA"|NAME_PT=="COSTA RICA", "Sim", "Não"),
          COPA= ifelse(ANFITRIAO=="Sim"|CONMEBOL=="Sim"|UEFA=="Sim"|AFC=="Sim"|CONCACAF=="Sim", "Sim", "Não"),
-         TITULO= ifelse(NAME_PT=="BRASIL"|NAME_PT=="ARGENTINA"|NAME_PT=="URUGUAI"|NAME_PT=="ALEMANHA"|NAME_PT=="ITÁLIA"|NAME_PT=="FRANÇA"|NAME_PT=="ESPANHA"|NAME_PT=="INGLATERRA", "Sim", "Não"))
+         TITULO= ifelse(NAME_PT=="BRASIL"|NAME_PT=="ARGENTINA"|NAME_PT=="URUGUAI"|NAME_PT=="ALEMANHA"|NAME_PT=="ITÁLIA"|NAME_PT=="FRANÇA"|NAME_PT=="ESPANHA"|NAME_PT=="REINO UNIDO", "Sim", "Não"))
 
 classificados = Mundo |> 
   filter(ANFITRIAO=="Sim"|CONMEBOL=="Sim"|UEFA=="Sim"|AFC=="Sim"|CONCACAF=="Sim"|CAF=="Sim")
@@ -101,7 +101,7 @@ tmap_mode("view")
 tm_shape(Mundo) + 
   tm_polygons("situacao",
               border.col = "white",
-              title = paste(as.character(dim(classificados)[1]), "Países classificados para a Copa do Mundo do Qatar 2022"),
+              title = paste(as.character(dim(classificados)[1]+1), "Países classificados para a Copa do Mundo do Qatar 2022"),
               id = "NAME_PT",
               popup.vars=c("Nome:" = "NAME_PT",
                            "Situação:" = "situacao",
