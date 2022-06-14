@@ -22,12 +22,20 @@ Mundo = Mundo |>
   mutate(ANFITRIAO= ifelse(NAME_PT=="QATAR", "Sim", "Não"), 
          CONMEBOL= ifelse(NAME_PT=="BRASIL"|NAME_PT=="ARGENTINA"|NAME_PT=="EQUADOR"|NAME_PT=="URUGUAI", "Sim", "Não"), 
          UEFA= ifelse(NAME_PT=="ALEMANHA"|NAME_PT=="DINAMARCA"|NAME_PT=="FRANÇA"|NAME_PT=="BÉLGICA"|NAME_PT=="CROÁCIA"|NAME_PT=="SÉRVIA"|NAME_PT=="ESPANHA"|NAME_PT=="REINO UNIDO"|NAME_PT=="SUÍÇA"|NAME_PT=="HOLANDA"|NAME_PT=="PORTUGAL"|NAME_PT=="POLÔNIA", "Sim", "Não"),
-         AFC= ifelse(NAME_PT=="IRÃ"|NAME_PT=="COREIA DO SUL"|NAME_PT=="JAPÃO"|NAME_PT=="ARÁBIA SAUDITA", "Sim", "Não"),
+         AFC= ifelse(NAME_PT=="IRÃ"|NAME_PT=="COREIA DO SUL"|NAME_PT=="JAPÃO"|NAME_PT=="ARÁBIA SAUDITA"|NAME_PT=="AUSTRÁLIA", "Sim", "Não"),
          CONCACAF= ifelse(NAME_PT=="CANADÁ"|NAME_PT=="MÉXICO"|NAME_PT=="ESTADOS UNIDOS", "Sim", "Não"),
          CAF= ifelse(NAME_PT=="GANA"|NAME_PT=="SENEGAL"|NAME_PT=="TUNÍSIA"|NAME_PT=="MARROCOS"|NAME_PT=="CAMARÕES", "Sim", "Não"),
-         REPESCAGEM=ifelse(NAME_PT=="AUSTRÁLIA"|NAME_PT=="PERU"|NAME_PT=="NOVA ZELÂNDIA"|NAME_PT=="COSTA RICA", "Sim", "Não"),
+         REPESCAGEM=ifelse(NAME_PT=="NOVA ZELÂNDIA"|NAME_PT=="COSTA RICA", "Sim", "Não"),
          COPA= ifelse(ANFITRIAO=="Sim"|CONMEBOL=="Sim"|UEFA=="Sim"|AFC=="Sim"|CONCACAF=="Sim", "Sim", "Não"),
-         TITULO= ifelse(NAME_PT=="BRASIL"|NAME_PT=="ARGENTINA"|NAME_PT=="URUGUAI"|NAME_PT=="ALEMANHA"|NAME_PT=="ITÁLIA"|NAME_PT=="FRANÇA"|NAME_PT=="ESPANHA"|NAME_PT=="REINO UNIDO", "Sim", "Não"))
+         TITULO= ifelse(NAME_PT=="BRASIL"|NAME_PT=="ARGENTINA"|NAME_PT=="URUGUAI"|NAME_PT=="ALEMANHA"|NAME_PT=="ITÁLIA"|NAME_PT=="FRANÇA"|NAME_PT=="ESPANHA"|NAME_PT=="REINO UNIDO", "Sim", "Não"),
+         GRUPO= ifelse(NAME_PT=="QATAR"|NAME_PT=="EQUADOR"|NAME_PT=="SENEGAL"|NAME_PT=="HOLANDA","A",
+ifelse(NAME_PT=="REINO UNIDO"|NAME_PT=="IRÃ"|NAME_PT=="ESTADOS UNIDOS","B",
+ifelse(NAME_PT=="ARGENTINA"|NAME_PT=="ARÁBIA SAUDITA"|NAME_PT=="MÉXICO"|NAME_PT=="POLÔNIA","C",
+ifelse(NAME_PT=="FRANÇA"|NAME_PT=="AUSTRÁLIA"|NAME_PT=="DINAMARCA"|NAME_PT=="TUNÍSIA","D",
+ifelse(NAME_PT=="ESPANHA"|NAME_PT=="ALEMANHA"|NAME_PT=="JAPÃO","E",
+ifelse(NAME_PT=="BÉLGICA"|NAME_PT=="CANADÁ"|NAME_PT=="MARROCOS"|NAME_PT=="CROÁCIA","F",
+ifelse(NAME_PT=="BRASIL"|NAME_PT=="SÉRVIA"|NAME_PT=="SUÍÇA"|NAME_PT=="CAMARÕES","G",
+ifelse(NAME_PT=="PORTUGAL"|NAME_PT=="GANA"|NAME_PT=="URUGUAI"|NAME_PT=="COREIA DO SUL","H","-")))))))))                      
 
 classificados = Mundo |> 
   filter(ANFITRIAO=="Sim"|CONMEBOL=="Sim"|UEFA=="Sim"|AFC=="Sim"|CONCACAF=="Sim"|CAF=="Sim")
@@ -105,7 +113,8 @@ tm_shape(Mundo) +
               id = "NAME_PT",
               popup.vars=c("Nome:" = "NAME_PT",
                            "Situação:" = "situacao",
-                           "Já foi campeão:" = "TITULO"), 
+                           "Já foi campeão:" = "TITULO",
+                           "Grupo:" = "GRUPO"), 
               palette = c("purple", gre[8], blu[8], yel[4], red[6], "black", yel[8], blu[2], "gray"),
               textNA = "Valor Faltante",
               set.view = 6, legend.show = T)  +
