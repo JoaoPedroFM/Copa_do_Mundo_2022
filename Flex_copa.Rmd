@@ -122,9 +122,10 @@ tm_shape(Mundo) +
                            "Situação:" = "situacao",
                            "Já foi campeão:" = "TITULO",
                            "Grupo:" = "GRUPO"), 
-              palette = c("purple", gre[8], blu[8], yel[4], red[6], "black", 
-                          # yel[8], 
-                          blu[2], "gray"),
+              palette = "Paired",
+                          # "purple", red[4], blu[8], yel[6], red[8], "black",
+                          # # yel[8],
+                          # blu[2], "gray"),
               textNA = "Valor Faltante",
               set.view = 6, legend.show = T)  +
   tm_view(alpha = 1, view.legend.position = c("left","bottom")) +
