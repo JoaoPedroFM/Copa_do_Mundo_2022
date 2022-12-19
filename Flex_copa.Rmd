@@ -43,7 +43,14 @@ ifelse(NAME_PT=="PORTUGAL"|NAME_PT=="GANA"|NAME_PT=="URUGUAI"|NAME_PT=="COREIA D
         GRUPO_E= ifelse(NAME_PT=="ESPANHA"|NAME_PT=="COSTA RICA"|NAME_PT=="ALEMANHA"|NAME_PT=="JAPÃO","Sim", "Não"),
         GRUPO_F= ifelse(NAME_PT=="BÉLGICA"|NAME_PT=="CANADÁ"|NAME_PT=="MARROCOS"|NAME_PT=="CROÁCIA","Sim", "Não"),
         GRUPO_G= ifelse(NAME_PT=="BRASIL"|NAME_PT=="SÉRVIA"|NAME_PT=="SUÍÇA"|NAME_PT=="CAMARÕES","Sim", "Não"),
-      GRUPO_H= ifelse(NAME_PT=="PORTUGAL"|NAME_PT=="GANA"|NAME_PT=="URUGUAI"|NAME_PT=="COREIA DO SUL","Sim", "Não"))            
+      GRUPO_H= ifelse(NAME_PT=="PORTUGAL"|NAME_PT=="GANA"|NAME_PT=="URUGUAI"|NAME_PT=="COREIA DO SUL","Sim", "Não"),
+      FG= ifelse(NAME_PT=="QATAR"|NAME_PT=="EQUADOR"|NAME_PT=="IRÃ"|NAME_PT=="ARÁBIA SAUDITA"|NAME_PT=="MÉXICO"|NAME_PT=="DINAMARCA"|NAME_PT=="TUNÍSIA"|NAME_PT=="COSTA RICA"|NAME_PT=="ALEMANHA"|NAME_PT=="BÉLGICA"|NAME_PT=="CANADÁ"|NAME_PT=="BRASIL"|NAME_PT=="SÉRVIA"|NAME_PT=="SUÍÇA"|NAME_PT=="CAMARÕES"|NAME_PT=="PORTUGAL"|NAME_PT=="GANA"|NAME_PT=="URUGUAI"|NAME_PT=="COREIA DO SUL","Sim", "Não"),
+      OF= ifelse(NAME_PT=="SENEGAL"|NAME_PT=="HOLANDA"|NAME_PT=="REINO UNIDO"|NAME_PT=="ESTADOS UNIDOS"|NAME_PT=="ARGENTINA"|NAME_PT=="POLÔNIA"|NAME_PT=="FRANÇA"|NAME_PT=="AUSTRÁLIA"|NAME_PT=="ESPANHA"|NAME_PT=="JAPÃO"|NAME_PT=="MARROCOS"|NAME_PT=="CROÁCIA","Sim", "Não"),
+      QF= "Não",
+      SF= "Não",
+      FINAL= "Não",
+      CAMPEAO = "Não"
+)            
 
 classificados = Mundo |> 
   filter(ANFITRIAO=="Sim"|CONMEBOL=="Sim"|UEFA=="Sim"|AFC=="Sim"|CONCACAF=="Sim"|CAF=="Sim")
@@ -179,6 +186,69 @@ for (i in 1:length(Mundo$COPA)){
 Mundo$situacao = ordered(Mundo$situacao, 
                           levels = c("A",  "B",  "C", "D", "E", "F", "G", "H", "I", "J"),
                           labels = c("Grupo A",  "Grupo B",  "Grupo C", "Grupo D", "Grupo E", "Grupo F", "Grupo G", "Grupo H", "Não Classificado","Dados Inconsistentes"))
+
+red = brewer.pal(9,"Reds")
+gre = brewer.pal(9,"Greens")
+yel = brewer.pal(9,"YlOrBr")
+blu = brewer.pal(9,"Blues")
+
+#Definindo o tipo do mapa como interativo
+tmap_mode("view")
+
+tm_shape(Mundo) + 
+  tm_polygons("situacao",
+              border.col = "white",
+              title = paste(as.character(dim(classificados)[1]+1), "Países classificados para a Copa do Mundo do Qatar 2022"),
+              id = "NAME_PT",
+              popup.vars=c("Nome:" = "NAME_PT",
+                           "Situação:" = "situacao",
+                           "Já foi campeão:" = "TITULO"), 
+              palette = "Paired",
+              textNA = "Valor Faltante",
+              set.view = 6, legend.show = T)  +
+  tm_view(alpha = 1, view.legend.position = c("left","bottom")) +
+  tm_add_legend(labels = "Clique em um país para mais informações!", col = "white")
+
+```
+
+### Classificação na Copa do Mundo de 2022
+
+```{r}
+Mundo$situacao= NA
+
+for (i in 1:length(Mundo$COPA)){
+  if(is.na(Mundo$COPA[i])==T) 
+    Mundo$situacao[i] = "H"
+  else{
+    if((Mundo$CAMPEAO[i])== "Sim")
+      Mundo$situacao[i] = "A"
+    else{
+      if((Mundo$FINAL[i])== "Sim")
+        Mundo$situacao[i] = "B"
+      else{
+        if((Mundo$SF[i])== "Sim")
+          Mundo$situacao[i] = "C"
+        else{
+          if((Mundo$QF[i])== "Sim")
+            Mundo$situacao[i] = "D"
+          else{
+            if((Mundo$OF[i])== "Sim")
+              Mundo$situacao[i] = "E"
+            else{
+              if((Mundo$FG[i])== "Sim")
+                Mundo$situacao[i] = "F"
+             else{Mundo$situacao[i] = "G"}
+            }
+          }
+        }
+      }
+    }
+  }
+}
+              
+Mundo$situacao = ordered(Mundo$situacao, 
+                          levels = c("A",  "B",  "C", "D", "E", "F", "G", "H"),
+                          labels = c("Campeão", "Final", "Semifinal", "Quartas de Final", "Oitavas de Final", "Fase de Grupos","Não Classificado", "Dados Inconsistentes"))
 
 red = brewer.pal(9,"Reds")
 gre = brewer.pal(9,"Greens")
