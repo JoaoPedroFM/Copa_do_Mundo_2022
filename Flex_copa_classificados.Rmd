@@ -1,0 +1,326 @@
+---
+title: "Copa do Mundo 2026"
+output: 
+  flexdashboard::flex_dashboard:
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+{library(tidyverse)
+library(readxl)
+library(tmap)
+library(RColorBrewer)
+library(sf)}
+
+Mundo = st_read(dsn = "CNTR_RG_01M_2020_4326.shp")
+Mundo = Mundo |> 
+  filter(NAME_ENGL!="United Kingdom") |> 
+  select(NAME_ENGL, geometry)
+
+UK = st_read(dsn = "ne_10m_admin_0_map_subunits.shp") |> 
+  rename(NAME_ENGL=NAME_LONG) |> 
+  filter(NAME_ENGL=="England"|NAME_ENGL=="Scotland"|NAME_ENGL=="Wales"|NAME_ENGL=="Northern Ireland") |> 
+  select(NAME_ENGL, geometry)
+
+Mundo = bind_rows(Mundo, UK)
+
+paises = read_excel("paises.xlsx")
+# 
+# Mundo = Mundo |> 
+#   select(-NAME_PT) |> 
+#   rename(NAME_ENGL=NAME)
+# 
+# # Exemplo: usando shapefile "Countries" do UK Data Service
+# # Caminho local após download e descompactação
+# path_shp <- "infuse_ctry_2011_clipped.shp"
+# 
+# uk_countries <- st_read(dsn = path_shp)
+# 
+# # Verificar os nomes (atributos)
+# print(names(uk_countries))
+# print(unique(uk_countries$geo_label))  # por exemplo: England, Scotland, Wales, Northern Ireland
+# 
+# UK_sub = st_read("infuse_ctry_2011_clipped.shp") |> 
+#   select(geo_label, geometry) |> 
+#   rename(NAME_ENGL = geo_label)
+# # |>
+# #   mutate(NAME_PT = case_when(
+# #     NAME_1 == "England" ~ "INGLATERRA",
+# #     NAME_1 == "Scotland" ~ "ESCÓCIA",
+# #     NAME_1 == "Wales" ~ "PAÍS DE GALES",
+# #     NAME_1 == "Northern Ireland" ~ "IRLANDA DO NORTE"
+# #   ))
+# 
+# Mundo = bind_rows(Mundo, UK_sub)
+
+Mundo = Mundo |>
+  left_join(paises, by="NAME_ENGL") |>
+  select(NAME_PT, geometry) |> 
+  mutate(NAME_PT= str_to_upper(NAME_PT)) |> 
+  mutate(ANFITRIAO= ifelse(NAME_PT=="ESTADOS UNIDOS"|NAME_PT=="CANADÁ"|NAME_PT=="MÉXICO", "Sim", "Não"), 
+         CONMEBOL= ifelse(NAME_PT=="ARGENTINA"|NAME_PT=="BRASIL"|NAME_PT=="EQUADOR"|NAME_PT=="URUGUAI"|NAME_PT=="COLÔMBIA"|NAME_PT=="PARAGUAI", "Sim", "Não"), 
+         UEFA= "Não",
+         AFC= ifelse(NAME_PT=="JAPÃO"|NAME_PT=="IRÃ"|NAME_PT=="UZBEQUISTÃO"|NAME_PT=="COREIA DO SUL"|NAME_PT=="JORDÂNIA"|NAME_PT=="AUSTRÁLIA", "Sim", "Não"),
+         CONCACAF= "Não",
+         CAF= ifelse(NAME_PT=="MARROCOS"|NAME_PT=="TUNÍSIA", "Sim", "Não"),
+         OFC= ifelse(NAME_PT=="NOVA ZELÂNDIA", "Sim", "Não"),
+         REPESCAGEM= ifelse(NAME_PT=="NOVA CALEDÔNIA"|NAME_PT=="BOLÍVIA", "Sim", "Não"),
+         COPA= ifelse(ANFITRIAO=="Sim"|CONMEBOL=="Sim"|UEFA=="Sim"|AFC=="Sim"|CONCACAF=="Sim", "Sim", "Não"),
+         CAMPEAO= ifelse(NAME_PT=="BRASIL"|NAME_PT=="ARGENTINA"|NAME_PT=="URUGUAI"|NAME_PT=="ALEMANHA"|NAME_PT=="ITÁLIA"|NAME_PT=="FRANÇA"|NAME_PT=="ESPANHA"|NAME_PT=="INGLATERRA", "Sim", "Não"),
+         TITULOS= ifelse(NAME_PT=="BRASIL", 5,
+                  ifelse(NAME_PT=="ITÁLIA"|NAME_PT=="ALEMANHA", 4, 
+                  ifelse(NAME_PT=="ARGENTINA", 3,
+                  ifelse(NAME_PT=="URUGUAI"|NAME_PT=="FRANÇA", 2,
+                  ifelse(NAME_PT=="INGLATERRA"|NAME_PT=="ESPANHA", 1, 
+                  0)))))
+         # ,
+#          GRUPO= ifelse(NAME_PT=="QATAR"|NAME_PT=="EQUADOR"|NAME_PT=="SENEGAL"|NAME_PT=="HOLANDA","A",
+# ifelse(NAME_PT=="REINO UNIDO"|NAME_PT=="IRÃ"|NAME_PT=="ESTADOS UNIDOS","B",
+# ifelse(NAME_PT=="ARGENTINA"|NAME_PT=="ARÁBIA SAUDITA"|NAME_PT=="MÉXICO"|NAME_PT=="POLÔNIA","C",
+# ifelse(NAME_PT=="FRANÇA"|NAME_PT=="AUSTRÁLIA"|NAME_PT=="DINAMARCA"|NAME_PT=="TUNÍSIA","D",
+# ifelse(NAME_PT=="ESPANHA"|NAME_PT=="COSTA RICA"|NAME_PT=="ALEMANHA"|NAME_PT=="JAPÃO","E",
+# ifelse(NAME_PT=="BÉLGICA"|NAME_PT=="CANADÁ"|NAME_PT=="MARROCOS"|NAME_PT=="CROÁCIA","F",
+# ifelse(NAME_PT=="BRASIL"|NAME_PT=="SÉRVIA"|NAME_PT=="SUÍÇA"|NAME_PT=="CAMARÕES","G",
+# ifelse(NAME_PT=="PORTUGAL"|NAME_PT=="GANA"|NAME_PT=="URUGUAI"|NAME_PT=="COREIA DO SUL","H","-")))))))),
+#         GRUPO_A= ifelse(NAME_PT=="QATAR"|NAME_PT=="EQUADOR"|NAME_PT=="SENEGAL"|NAME_PT=="HOLANDA","Sim", "Não"),
+#         GRUPO_B= ifelse(NAME_PT=="REINO UNIDO"|NAME_PT=="IRÃ"|NAME_PT=="ESTADOS UNIDOS","Sim", "Não"),
+#         GRUPO_C= ifelse(NAME_PT=="ARGENTINA"|NAME_PT=="ARÁBIA SAUDITA"|NAME_PT=="MÉXICO"|NAME_PT=="POLÔNIA","Sim", "Não"),
+#         GRUPO_D= ifelse(NAME_PT=="FRANÇA"|NAME_PT=="AUSTRÁLIA"|NAME_PT=="DINAMARCA"|NAME_PT=="TUNÍSIA","Sim", "Não"),
+#         GRUPO_E= ifelse(NAME_PT=="ESPANHA"|NAME_PT=="COSTA RICA"|NAME_PT=="ALEMANHA"|NAME_PT=="JAPÃO","Sim", "Não"),
+#         GRUPO_F= ifelse(NAME_PT=="BÉLGICA"|NAME_PT=="CANADÁ"|NAME_PT=="MARROCOS"|NAME_PT=="CROÁCIA","Sim", "Não"),
+#         GRUPO_G= ifelse(NAME_PT=="BRASIL"|NAME_PT=="SÉRVIA"|NAME_PT=="SUÍÇA"|NAME_PT=="CAMARÕES","Sim", "Não"),
+#       GRUPO_H= ifelse(NAME_PT=="PORTUGAL"|NAME_PT=="GANA"|NAME_PT=="URUGUAI"|NAME_PT=="COREIA DO SUL","Sim", "Não"),
+#       FG= ifelse(NAME_PT=="QATAR"|NAME_PT=="EQUADOR"|NAME_PT=="IRÃ"|NAME_PT=="ARÁBIA SAUDITA"|NAME_PT=="MÉXICO"|NAME_PT=="DINAMARCA"|NAME_PT=="TUNÍSIA"|NAME_PT=="COSTA RICA"|NAME_PT=="ALEMANHA"|NAME_PT=="BÉLGICA"|NAME_PT=="CANADÁ"|NAME_PT=="BRASIL"|NAME_PT=="SÉRVIA"|NAME_PT=="SUÍÇA"|NAME_PT=="CAMARÕES"|NAME_PT=="PORTUGAL"|NAME_PT=="GANA"|NAME_PT=="URUGUAI"|NAME_PT=="COREIA DO SUL","Sim", "Não"),
+#       OF= ifelse(NAME_PT=="SENEGAL"|NAME_PT=="HOLANDA"|NAME_PT=="REINO UNIDO"|NAME_PT=="ESTADOS UNIDOS"|NAME_PT=="ARGENTINA"|NAME_PT=="POLÔNIA"|NAME_PT=="FRANÇA"|NAME_PT=="AUSTRÁLIA"|NAME_PT=="ESPANHA"|NAME_PT=="JAPÃO"|NAME_PT=="MARROCOS"|NAME_PT=="CROÁCIA","Sim", "Não"),
+#       QF= "Não",
+#       SF= "Não",
+#       FINAL= "Não",
+#       CAMPEAO = "Não"
+)            
+
+classificados = Mundo |> 
+  filter(ANFITRIAO=="Sim"|CONMEBOL=="Sim"|UEFA=="Sim"|AFC=="Sim"|CONCACAF=="Sim"|CAF=="Sim"|OFC=="Sim")
+
+```
+
+Informações sobre as Seleções Classificadas 
+=======================================================================
+
+column {data-width=500, .tabset}
+-----------------------------------------------------------------------
+
+### Países classificados para a Copa do Mundo de 2026
+
+```{r}
+Mundo$situacao= NA
+
+for (i in 1:length(Mundo$COPA)){
+  if(is.na(Mundo$COPA[i])==T)
+    Mundo$situacao[i] = "J"
+  else{
+    if((Mundo$ANFITRIAO[i])== "Sim")
+      Mundo$situacao[i] = "A"
+    else{
+      if((Mundo$CONMEBOL[i])== "Sim")
+        Mundo$situacao[i] = "B"
+      else{
+        if((Mundo$UEFA[i])== "Sim")
+          Mundo$situacao[i] = "C"
+        else{
+          if((Mundo$AFC[i])== "Sim")
+            Mundo$situacao[i] = "D"
+          else{
+            if((Mundo$CONCACAF[i])== "Sim")
+              Mundo$situacao[i] = "E"
+            else{
+              if((Mundo$CAF[i])== "Sim")
+                Mundo$situacao[i] = "F"
+              else{
+                 if((Mundo$OFC[i])== "Sim")
+                   Mundo$situacao[i] = "G"
+                 else{
+                   if((Mundo$REPESCAGEM[i])== "Sim")
+                     Mundo$situacao[i] = "H"
+                  else{Mundo$situacao[i] = "I"}
+                 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+Mundo$situacao = ordered(Mundo$situacao, 
+                          levels = c("A",  "B",  "C", "D", "E", "F", "G", "H", "I", "J"),
+                          labels = c("Anfitrião", 
+                                     "Classificado - CONMEBOL",
+                                     "Classificado - UEFA", 
+                                     "Classificado - AFC", 
+                                     "Classificado - CONCACAF",
+                                     "Classificado - CAF",
+                                     "Classificado - OFC",
+                                     "Repescagem Intercontinental",
+                                     "Não Classificado",
+                                     "Dados Inconsistentes"))
+
+Mundo$situacao <- fct_drop(Mundo$situacao, only = c("Dados Inconsistentes"))
+
+#Definindo o tipo do mapa como interativo
+tmap_mode("view")
+
+tm_shape(Mundo) + 
+  tm_polygons("situacao",
+              border.col = "white",
+              title = paste(as.character(dim(classificados)[1]), "de 48 Países classificados para a Copa do Mundo 2026"),
+              id = "NAME_PT",
+              popup.vars=c("Nome:" = "NAME_PT",
+                           "Situação:" = "situacao",
+                           "Já foi campeão:" = "CAMPEAO",
+                           "Títulos:" = "TITULOS"
+                           # ,
+                           # "Grupo:" = "GRUPO"
+                           ), 
+              palette = "Paired",
+              textNA = "",
+              set.view = 6, legend.show = T)  +
+  tm_view(alpha = 1, view.legend.position = c("left","bottom")) +
+  tm_add_legend(labels = "Clique em um país para mais informações!", col = "white")
+
+```
+
+<!-- ### Grupos da Copa do Mundo de 2026 -->
+
+<!-- ```{r} -->
+<!-- Mundo$situacao= NA -->
+
+<!-- for (i in 1:length(Mundo$COPA)){ -->
+<!--   if(is.na(Mundo$COPA[i])==T)  -->
+<!--     Mundo$situacao[i] = "J" -->
+<!--   else{ -->
+<!--     if((Mundo$GRUPO_A[i])== "Sim") -->
+<!--       Mundo$situacao[i] = "A" -->
+<!--     else{ -->
+<!--       if((Mundo$GRUPO_B[i])== "Sim") -->
+<!--         Mundo$situacao[i] = "B" -->
+<!--       else{ -->
+<!--         if((Mundo$GRUPO_C[i])== "Sim") -->
+<!--           Mundo$situacao[i] = "C" -->
+<!--         else{ -->
+<!--           if((Mundo$GRUPO_D[i])== "Sim") -->
+<!--             Mundo$situacao[i] = "D" -->
+<!--           else{ -->
+<!--             if((Mundo$GRUPO_E[i])== "Sim") -->
+<!--               Mundo$situacao[i] = "E" -->
+<!--             else{ -->
+<!--               if((Mundo$GRUPO_F[i])== "Sim") -->
+<!--                 Mundo$situacao[i] = "F" -->
+<!--               else{ -->
+<!--                 if((Mundo$GRUPO_G[i])== "Sim") -->
+<!--                   Mundo$situacao[i] = "G" -->
+<!--                 else{ -->
+<!--                 if((Mundo$GRUPO_H[i])== "Sim") -->
+<!--                   Mundo$situacao[i] = "H" -->
+<!--                 else{Mundo$situacao[i] = "I"} -->
+<!--                 } -->
+<!--               } -->
+<!--             } -->
+<!--           } -->
+<!--         } -->
+<!--       } -->
+<!--     }   -->
+<!--   } -->
+<!-- } -->
+
+<!-- Mundo$situacao = ordered(Mundo$situacao,  -->
+<!--                           levels = c("A",  "B",  "C", "D", "E", "F", "G", "H", "I", "J"), -->
+<!--                           labels = c("Grupo A",  "Grupo B",  "Grupo C", "Grupo D", "Grupo E", "Grupo F", "Grupo G", "Grupo H", "Não Classificado","Dados Inconsistentes")) -->
+
+<!-- red = brewer.pal(9,"Reds") -->
+<!-- gre = brewer.pal(9,"Greens") -->
+<!-- yel = brewer.pal(9,"YlOrBr") -->
+<!-- blu = brewer.pal(9,"Blues") -->
+
+<!-- #Definindo o tipo do mapa como interativo -->
+<!-- tmap_mode("view") -->
+
+<!-- tm_shape(Mundo) +  -->
+<!--   tm_polygons("situacao", -->
+<!--               border.col = "white", -->
+<!--               title = paste(as.character(dim(classificados)[1]), "Países classificados para a Copa do Mundo 2026"), -->
+<!--               id = "NAME_PT", -->
+<!--               popup.vars=c("Nome:" = "NAME_PT", -->
+<!--                            "Situação:" = "situacao", -->
+<!--                            "Já foi campeão:" = "TITULO"),  -->
+<!--               palette = "Paired", -->
+<!--               textNA = "Valor Faltante", -->
+<!--               set.view = 6, legend.show = T)  + -->
+<!--   tm_view(alpha = 1, view.legend.position = c("left","bottom")) + -->
+<!--   tm_add_legend(labels = "Clique em um país para mais informações!", col = "white") -->
+
+<!-- ``` -->
+
+<!-- ### Classificação na Copa do Mundo de 2026 -->
+
+<!-- ```{r} -->
+<!-- Mundo$situacao= NA -->
+
+<!-- for (i in 1:length(Mundo$COPA)){ -->
+<!--   if(is.na(Mundo$COPA[i])==T) -->
+<!--     Mundo$situacao[i] = "H" -->
+<!--   else{ -->
+<!--     if((Mundo$CAMPEAO[i])== "Sim") -->
+<!--       Mundo$situacao[i] = "A" -->
+<!--     else{ -->
+<!--       if((Mundo$FINAL[i])== "Sim") -->
+<!--         Mundo$situacao[i] = "B" -->
+<!--       else{ -->
+<!--         if((Mundo$SF[i])== "Sim") -->
+<!--           Mundo$situacao[i] = "C" -->
+<!--         else{ -->
+<!--           if((Mundo$QF[i])== "Sim") -->
+<!--             Mundo$situacao[i] = "D" -->
+<!--           else{ -->
+<!--             if((Mundo$OF[i])== "Sim") -->
+<!--               Mundo$situacao[i] = "E" -->
+<!--             else{ -->
+<!--               if((Mundo$FG[i])== "Sim") -->
+<!--                 Mundo$situacao[i] = "F" -->
+<!--              else{Mundo$situacao[i] = "G"} -->
+<!--             } -->
+<!--           } -->
+<!--         } -->
+<!--       } -->
+<!--     } -->
+<!--   } -->
+<!-- } -->
+
+<!-- Mundo$situacao = ordered(Mundo$situacao, -->
+<!--                           levels = c("A",  "B",  "C", "D", "E", "F", "G", "H"), -->
+<!--                           labels = c("Campeão", "Final", "Semifinal", "Quartas de Final", "Oitavas de Final", "Fase de Grupos","Não Classificado", "Dados Inconsistentes")) -->
+
+<!-- red = brewer.pal(9,"Reds") -->
+<!-- gre = brewer.pal(9,"Greens") -->
+<!-- yel = brewer.pal(9,"YlOrBr") -->
+<!-- blu = brewer.pal(9,"Blues") -->
+
+<!-- #Definindo o tipo do mapa como interativo -->
+<!-- tmap_mode("view") -->
+
+<!-- tm_shape(Mundo) + -->
+<!--   tm_polygons("situacao", -->
+<!--               border.col = "white", -->
+<!--               title = paste(as.character(dim(classificados)[1]+1), "Países classificados para a Copa do Mundo do 2026"), -->
+<!--               id = "NAME_PT", -->
+<!--               popup.vars=c("Nome:" = "NAME_PT", -->
+<!--                            "Situação:" = "situacao", -->
+<!--                            "Já foi campeão:" = "TITULO", -->
+<!--                            "Grupo:" = "GRUPO"), -->
+<!--               palette = "Paired", -->
+<!--               textNA = "Valor Faltante", -->
+<!--               set.view = 6, legend.show = T)  + -->
+<!--   tm_view(alpha = 1, view.legend.position = c("left","bottom")) + -->
+<!--   tm_add_legend(labels = "Clique em um país para mais informações!", col = "white") -->
+
+<!-- ``` -->
